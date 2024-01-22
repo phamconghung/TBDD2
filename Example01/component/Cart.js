@@ -49,14 +49,8 @@ const Cart = () => {
       } catch (error) {
         console.error('Lỗi khi xử lý giỏ hàng:', error);
       }
-    };
-    
-    
-    
-    
-    
-
-    
+  };
+  
     const removeDuplicateItems = (cart) => {
       console.log('Cart before removing duplicates:', cart);
       const uniqueCart = [...new Map(cart.map(item => [item.id, item])).values()];
@@ -65,7 +59,9 @@ const Cart = () => {
     };
     
     
-    
+    const handlePlaceOrder = () => {
+    Alert.alert('Thông báo', 'Đặt hàng thành công!');
+  };
     
   
     const handleDecreaseQuantity = (itemId) => {
@@ -109,7 +105,6 @@ const Cart = () => {
   </View>
     );
     
-    
   
     const totalAmount = cart.reduce((total, item) => total + item.price * item.quantity, 0);
   
@@ -129,6 +124,9 @@ const Cart = () => {
       </View>
       <TouchableOpacity style={styles.clearButton} onPress={handleClearCart}>
         <Text style={styles.clearButtonText}>Clear Cart</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.clearButton1} onPress={handlePlaceOrder}>
+        <Text style={styles.clearButtonText}>Place Order</Text>
       </TouchableOpacity>
       <Footer />
     </View>
@@ -174,6 +172,13 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     backgroundColor: '#ff5252', // Màu đỏ hoặc màu bạn muốn
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  clearButton1: {
+    backgroundColor: '#007BFF', // Màu đỏ hoặc màu bạn muốn
     padding: 10,
     borderRadius: 8,
     marginTop: 16,

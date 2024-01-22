@@ -8,13 +8,15 @@ const Footer = () => {
   const navigation = useNavigation();
 
   const goToCart = () => {
-    // Chuyển đến trang giỏ hàng khi người dùng click vào biểu tượng giỏ hàng
     navigation.navigate('Cart');
   };
 
   const goToHome = () => {
-    // Chuyển đến trang chủ khi người dùng click vào biểu tượng home
     navigation.navigate('Home');
+  };
+
+  const goToUserProfile = () => {
+    navigation.navigate('UserProfileComponent');
   };
 
   return (
@@ -22,7 +24,9 @@ const Footer = () => {
       <TouchableOpacity onPress={goToHome}>
         <Icon name='home' type='font-awesome' color='#007BFF' style={styles.icon} />
       </TouchableOpacity>
-      <Icon name='user' type='font-awesome' color='#6C757D' style={styles.icon} />
+      <TouchableOpacity onPress={goToUserProfile}>
+        <Icon name='user' type='font-awesome' color='#6C757D' style={styles.icon} />
+      </TouchableOpacity>
       <TouchableOpacity onPress={goToCart}>
         <Icon name='shopping-cart' type='font-awesome' color='#6C757D' style={styles.icon} />
       </TouchableOpacity>

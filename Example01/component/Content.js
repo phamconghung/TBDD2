@@ -1,6 +1,5 @@
-//content
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, Button, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, Button, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -28,14 +27,26 @@ const Content = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(4);
   const [cart, setCart] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [currentCategory, setCurrentCategory] = useState(null);
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+
   const navigation = useNavigation();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://fakestoreapi.com/products');
-        const data = await response.json();
-        setProducts(data);
+        // Lấy danh sách categories
+        const responseCategories = await fetch('https://fakestoreapi.com/products/categories');
+        const categoriesData = await responseCategories.json();
+        setCategories(categoriesData);
+
+        // Lấy danh sách sản phẩm
+        const responseProducts = await fetch('https://fakestoreapi.com/products');
+        const productsData = await responseProducts.json();
+        setProducts(productsData);
       } catch (error) {
         console.error('Lỗi khi lấy dữ liệu:', error);
       }
@@ -44,24 +55,21 @@ const Content = () => {
     fetchData();
   }, []);
 
+  
+
   const addToCart = async (item) => {
     try {
-      // Lấy dữ liệu giỏ hàng từ AsyncStorage
       const existingCart = await AsyncStorage.getItem('cart');
       const existingCartArray = existingCart ? JSON.parse(existingCart) : [];
 
-      // Kiểm tra xem sản phẩm đã tồn tại trong giỏ hàng hay chưa
       const existingItemIndex = existingCartArray.findIndex((cartItem) => cartItem.id === item.id);
 
       if (existingItemIndex !== -1) {
-        // Nếu sản phẩm đã tồn tại, tăng số lượng của nó
         existingCartArray[existingItemIndex].quantity += 1;
       } else {
-        // Nếu sản phẩm chưa tồn tại, thêm sản phẩm mới vào giỏ hàng với quantity là 1
         existingCartArray.push({ ...item, quantity: 1 });
       }
 
-      // Lưu giỏ hàng mới vào AsyncStorage
       await AsyncStorage.setItem('cart', JSON.stringify(existingCartArray));
 
       setCart(existingCartArray);
@@ -73,22 +81,56 @@ const Content = () => {
 
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
+
+  // Lọc sản phẩm dựa trên truy vấn tìm kiếm và category
+  const filteredProducts = products.filter(
+    (item) =>
+      (!currentCategory || item.category === currentCategory) &&
+      item.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
   const renderProducts = currentProducts.map((item) => (
     <Product key={item.id} item={item} addToCart={addToCart} />
   ));
 
-  const totalPages = Math.ceil(products.length / productsPerPage);
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Categories</Text>
       <ScrollView horizontal>
-        <Image source={require('../assets/product/c1.png')} style={styles.image2} />
-        <Image source={require('../assets/product/c2.png')} style={styles.image2} />
-        <Image source={require('../assets/product/c3.png')} style={styles.image2} />
+        {/* Nút hiển thị tất cả */}
+        <TouchableOpacity
+          style={[styles.categoryButton, styles.showAllButton]}
+          onPress={() => {
+            setCurrentCategory(null);
+            setSearchQuery('');
+          }}
+        >
+          <Text style={{ color: 'black' }}>All</Text>
+        </TouchableOpacity>
+
+        {/* Danh sách các nút category */}
+        {categories.map((category) => (
+          <TouchableOpacity
+            key={category}
+            onPress={() => setCurrentCategory(category)}
+            style={[
+              styles.categoryButton,
+              { backgroundColor: currentCategory === category ? '#007BFF' : '#ddd' },
+            ]}>
+            <Text style={{ color: currentCategory === category ? 'white' : 'black' }}>{category}</Text>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
+      {/* Thêm ô nhập liệu tìm kiếm */}
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Tìm kiếm sản phẩm..."
+        onChangeText={(text) => setSearchQuery(text)}
+      />
       <Text style={styles.sectionTitle}>List Products</Text>
       <ScrollView horizontal>{renderProducts}</ScrollView>
       {/* Nút chuyển trang */}
@@ -96,13 +138,13 @@ const Content = () => {
         <Button
           title="Prev"
           onPress={() => setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))}
-          disabled={currentPage === 1} // Disable nút Prev khi ở trang đầu
+          disabled={currentPage === 1}
         />
         <Text>{currentPage}</Text>
         <Button
           title="Next"
           onPress={() => setCurrentPage((prevPage) => (prevPage < totalPages ? prevPage + 1 : prevPage))}
-          disabled={currentPage === totalPages} // Disable nút Next khi ở trang cuối
+          disabled={currentPage === totalPages}
         />
       </View>
     </View>
@@ -147,6 +189,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginVertical: 10,
   },
+  searchBar: {
+    marginTop: 10,
+    marginBottom: 10,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 5,
+  },
+  categoryButton: {
+    padding:5,
+    margin: 25,
+    textAlign:'center',
+    borderRadius: 5,
+},
+showAllButton: {
+    marginRight: 10,
+    padding: 5,
+    margin: 25,
+    borderRadius: 5,
+    backgroundColor:'#ddd',
+},
 });
 
 export default Content;
